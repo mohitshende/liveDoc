@@ -116,6 +116,7 @@ export default function Home({ session }) {
                     "https://ssl.gstatic.com/docs/templates/thumbnails/docs-blank-googlecolors.png"
                   }
                   layout="fill"
+                  alt="add new document"
                 />
               </div>
               <p className="ml-2 mt-2 text-sm">Blank</p>

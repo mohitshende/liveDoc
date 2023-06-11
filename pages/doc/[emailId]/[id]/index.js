@@ -93,7 +93,7 @@ const Doc = ({ session }) => {
           <img
             src={session?.user.image}
             className="rounded-full h-10 w-10 ml-2"
-            alt=""
+            alt="User Avatar"
           />
         </div>
       </header>
