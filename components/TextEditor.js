@@ -32,7 +32,11 @@ const TextEditor = ({ document, emailId }) => {
   }, [document]);
 
   const onEditorStateChange = (editorState) => {
-    setEditorState(editorState);
+    const currentEditorState = EditorState.forceSelection(
+      editorState,
+      editorState.getSelection()
+    );
+    setEditorState(currentEditorState);
     const saveDoc = async () => {
       await setDoc(
         docRef,

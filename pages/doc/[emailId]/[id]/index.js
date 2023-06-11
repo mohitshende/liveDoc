@@ -18,7 +18,9 @@ const Doc = ({ session }) => {
   const docRef = doc(db, `userDocs/${emailId}/docs/${id}`);
 
   useEffect(() => {
-    if (!session) return;
+    if (!session) {
+      router.replace("/");
+    }
 
     async function getUserDoc() {
       await getDoc(docRef)
