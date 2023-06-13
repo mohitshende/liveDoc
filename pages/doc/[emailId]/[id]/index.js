@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
 import { getServerSession } from "next-auth/next";
 import db from "../../../../firebase";
@@ -8,13 +8,24 @@ import TextEditor from "../../../../components/TextEditor";
 import { Button } from "@material-ui/core";
 import { authOptions } from "../../../api/auth/[...nextauth]";
 import AccessDenied from "../../../../components/AccessDenied";
-import { onSnapshot, doc, getDoc } from "firebase/firestore";
+import {
+  onSnapshot,
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import CustomModal from "../../../../components/CustomModal";
+import { signOut } from "next-auth/react";
 
 const Doc = ({ session }) => {
   const router = useRouter();
   const { id, emailId } = router.query;
 
   const [currentDoc, setCurrentDoc] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [isPublic, setIsPublic] = useState(false);
+
   const docRef = doc(db, `userDocs/${emailId}/docs/${id}`);
 
   useEffect(() => {
@@ -27,6 +38,7 @@ const Doc = ({ session }) => {
         .then((data) => {
           if (data.data()) {
             setCurrentDoc(data.data());
+            setIsPublic(data.data().isPublic);
           } else {
             router.replace("/");
           }
@@ -41,10 +53,31 @@ const Doc = ({ session }) => {
       doc(db, `userDocs/${emailId}/docs/${id}`),
       (snapshot) => {
         setCurrentDoc(snapshot.data());
+        setIsPublic(snapshot.data().isPublic);
       }
     );
     return unsub;
   }, []);
+  console.log(currentDoc);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log(isPublic);
+    await setDoc(
+      docRef,
+      {
+        timestamp: serverTimestamp(),
+        isPublic: isPublic === "true",
+      },
+      {
+        merge: true,
+      }
+    )
+      .then(() => {
+        setShowModal(false);
+        e.target.reset();
+      })
+      .catch((err) => alert(err));
+  };
 
   if (!currentDoc || !session) {
     return (
@@ -77,29 +110,35 @@ const Doc = ({ session }) => {
         </span>
 
         <div className="flex-grow px-2">
-          <h2 className="text-gray-600">{currentDoc?.fileName}</h2>
-          <div className="flex items-center text-sm space-x-2 -ml-1 h-8 text-gray-500">
-            <p className="">File</p>
-            <p className="">Edit</p>
-            <p className="">View</p>
-            <p className="">Insert</p>
-            <p className="">Format</p>
-            <p className="">Tools</p>
-          </div>
+          <h2 className="text-gray-600 text-xl">{currentDoc?.fileName}</h2>
         </div>
 
         <div className="idRight hidden md:inline-flex items-center">
-          <Button>
-            <PeopleIcon /> SHARE
-          </Button>
+          {emailId == session.user.email && (
+            <Button onClick={() => setShowModal(true)} size="small">
+              <PeopleIcon /> SHARE
+            </Button>
+          )}
           <img
             src={session?.user.image}
-            className="rounded-full h-10 w-10 ml-2"
+            className="rounded-full h-8 w-8 m-2"
             alt="User Avatar"
           />
+          <p
+            className="text-bold text-sx cursor-pointer hover:text-blue-500"
+            onClick={signOut}
+          >
+            Logout
+          </p>
         </div>
       </header>
-
+      <CustomModal
+        handleSubmit={handleSubmit}
+        showModal={showModal}
+        setShowModal={setShowModal}
+        isPublic={isPublic}
+        setIsPublic={setIsPublic}
+      />
       {currentDoc && <TextEditor document={currentDoc} emailId={emailId} />}
     </div>
   );

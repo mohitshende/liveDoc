@@ -1,47 +1,69 @@
-import React, { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
-import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
-import { EditorState, convertFromRaw, convertToRaw } from "draft-js";
+import React, { useState, useEffect, useRef } from "react";
 import db from "../firebase";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
 import { setDoc, doc } from "firebase/firestore";
+import dynamic from "next/dynamic";
+import "react-quill/dist/quill.snow.css";
 
-const Editor = dynamic(
-  () => import("react-draft-wysiwyg").then((module) => module.Editor),
-  {
-    ssr: false,
-  }
+const ReactQuill = dynamic(
+  () => {
+    return import("react-quill");
+  },
+  { ssr: false }
 );
 
 const TextEditor = ({ document, emailId }) => {
-  const { data: session } = useSession();
+  // const { data: session } = useSession();
 
-  const [editorState, setEditorState] = useState(EditorState.createEmpty());
   const router = useRouter();
   const { id } = router.query;
-
   const docRef = doc(db, `userDocs/${emailId}/docs/${id}`);
+
+  const [editorState, setEditorState] = useState("");
 
   useEffect(() => {
     if (document?.editorState) {
-      setEditorState(
-        EditorState.createWithContent(convertFromRaw(document?.editorState))
-      );
+      setEditorState(document.editorState);
     }
   }, [document]);
 
+  const modules = {
+    toolbar: [
+      [{ header: [1, 2, false] }],
+      ["bold", "italic", "underline", "strike", "blockquote"],
+      [
+        { list: "ordered" },
+        { list: "bullet" },
+        { indent: "-1" },
+        { indent: "+1" },
+      ],
+      ["link", "image"],
+      ["clean"],
+    ],
+  };
+
+  const formats = [
+    "header",
+    "bold",
+    "italic",
+    "underline",
+    "strike",
+    "blockquote",
+    "list",
+    "bullet",
+    "indent",
+    "link",
+    "image",
+  ];
+
   const onEditorStateChange = (editorState) => {
-    const currentEditorState = EditorState.forceSelection(
-      editorState,
-      editorState.getSelection()
-    );
-    setEditorState(currentEditorState);
+    setEditorState(editorState);
     const saveDoc = async () => {
       await setDoc(
         docRef,
         {
-          editorState: convertToRaw(editorState.getCurrentContent()),
+          editorState: editorState,
         },
         {
           merge: true,
@@ -52,12 +74,14 @@ const TextEditor = ({ document, emailId }) => {
   };
 
   return (
-    <div className="bg-[#F8F9FA] min-h-screen pb-1">
-      <Editor
-        editorState={editorState}
-        onEditorStateChange={onEditorStateChange}
-        toolbarClassName="flex sticky top-0 z-50 !justify-center mx-auto"
-        editorClassName="bg-white shadow-lg max-w-5xl mx-auto border p-10 min-h-screen my-6"
+    <div className="bg-[#F8F9FA] min-h-screen hadow-xl">
+      <ReactQuill
+        theme="snow"
+        value={editorState}
+        onChange={onEditorStateChange}
+        modules={modules}
+        formats={formats}
+        style={{ height: "calc(100vh - 100px)" }}
       />
     </div>
   );

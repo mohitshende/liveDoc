@@ -14,14 +14,20 @@ const Header = () => {
           <p className="text-xl text-gray-500">LiveDoc</p>
         </div>
 
-        <div className="flex items-center justify-end space-x-2">
-          <IconButton onClick={signOut}>
-            <img
-              src={session?.user.image}
-              className="rounded-full h-[24px] w-[24px] "
-              alt="User Avatar"
-            />
-          </IconButton>
+        <div className="flex items-center justify-end mr-4 gap-2">
+          {/* <IconButton> */}
+          <img
+            src={session?.user.image}
+            className="rounded-full h-[24px] w-[24px] "
+            alt="User Avatar"
+          />
+          {/* </IconButton> */}
+          <p
+            className="text-bold text-sx cursor-pointer hover:text-blue-500"
+            onClick={signOut}
+          >
+            Logout
+          </p>
         </div>
       </div>
     </header>
